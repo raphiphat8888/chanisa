@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Empty Shop",
-    "slug": "empty-shop",
+    "name": "MenuPilot",
+    "slug": "menu-pilot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "emptyshop",
+    "scheme": "menupilot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -33,9 +33,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#F7F8FC",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#15161D"
           }
         }
       ]

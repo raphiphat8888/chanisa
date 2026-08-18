@@ -1,0 +1,38 @@
+[
+  {
+    "id": "seed-1",
+    "name": "ข้าวกะเพราเนื้อไข่ดาว",
+    "category": "จานหลัก",
+    "price": 159,
+    "description": "เนื้อสับผัดกะเพรา เสิร์ฟพร้อมไข่ดาวกรอบ",
+    "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+    "available": true
+  },
+  {
+    "id": "seed-2",
+    "name": "ผัดไทยกุ้งสด",
+    "category": "เส้น",
+    "price": 169,
+    "description": "เส้นจันท์เหนียวนุ่ม กุ้งสดตัวโต และซอสสูตรของร้าน",
+    "imageUrl": "https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=900&q=80",
+    "available": true
+  },
+  {
+    "id": "seed-3",
+    "name": "ปีกไก่ทอดน้ำปลา",
+    "category": "ของทานเล่น",
+    "price": 129,
+    "description": "ปีกไก่ทอดกรอบ หอมกลิ่นน้ำปลา เสิร์ฟ 6 ชิ้น",
+    "imageUrl": "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=900&q=80",
+    "available": true
+  },
+  {
+    "id": "seed-4",
+    "name": "ชาไทยเย็น",
+    "category": "เครื่องดื่ม",
+    "price": 65,
+    "description": "ชาไทยเข้มข้น หวานมันกำลังดี เสิร์ฟพร้อมน้ำแข็ง",
+    "imageUrl": "https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=900&q=80",
+    "available": false
+  }
+]
