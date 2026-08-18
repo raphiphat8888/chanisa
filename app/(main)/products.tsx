@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { appColors, appRadius, appSpacing } from '@/constants/appTheme';
+import { useAuth } from '@/contexts/AuthContext';
 import { useProducts } from '@/contexts/ProductsContext';
 import { productCategories, type Product, type ProductInput } from '@/types/product';
 
@@ -12,6 +13,8 @@ const emptyProduct: ProductInput = { name: '', category: productCategories[0], p
 
 export default function ProductsScreen() {
   const { products, loading, saving, error, createProduct, updateProduct, deleteProduct, toggleProduct } = useProducts();
+  const { user } = useAuth();
+  const canManage = user?.role === 'admin';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('ทั้งหมด');
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,7 +47,7 @@ export default function ProductsScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.list} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}><View><Text style={styles.eyebrow}>PRODUCT OPERATIONS</Text><Text style={styles.title}>จัดการเมนู</Text><Text style={styles.subtitle}>เพิ่ม แก้ไข ค้นหา และควบคุมสถานะขาย</Text></View><Pressable onPress={openCreate} style={styles.addButton}><Ionicons color="#FFF" name="add" size={18} /><Text style={styles.addButtonText}>เพิ่มเมนู</Text></Pressable></View>
+        <View style={styles.header}><View><Text style={styles.eyebrow}>PRODUCT OPERATIONS</Text><Text style={styles.title}>จัดการเมนู</Text><Text style={styles.subtitle}>{canManage ? 'เพิ่ม แก้ไข ค้นหา และควบคุมสถานะขาย' : 'ค้นหาและดูรายการเมนู'}</Text></View>{canManage && <Pressable onPress={openCreate} style={styles.addButton}><Ionicons color="#FFF" name="add" size={18} /><Text style={styles.addButtonText}>เพิ่มเมนู</Text></Pressable>}</View>
 
         {!!(error || formError) && <View style={styles.errorBox}><Ionicons color={appColors.danger} name="warning-outline" size={17} /><Text style={styles.errorText}>{formError || error}</Text></View>}
 
@@ -52,8 +55,8 @@ export default function ProductsScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{filters.map((item) => <Pressable key={item} onPress={() => setFilter(item)} style={[styles.filter, filter === item && styles.filterActive]}><Text style={[styles.filterText, filter === item && styles.filterTextActive]}>{item}</Text></Pressable>)}</ScrollView>
 
         <View style={styles.listHeading}><Text style={styles.listTitle}>รายการเมนู</Text><Text style={styles.listCount}>{visibleProducts.length} รายการ</Text></View>
-        {visibleProducts.map((product) => <ProductCard key={product.id} product={product} busy={saving} onEdit={() => openEdit(product)} onDelete={() => remove(product)} onToggle={() => { void toggleProduct(product); }} />)}
-        {visibleProducts.length === 0 && <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons color={appColors.primary} name="restaurant-outline" size={28} /></View><Text style={styles.emptyTitle}>ไม่พบเมนู</Text><Text style={styles.emptyText}>ลองเปลี่ยนคำค้นหา หรือเพิ่มเมนูใหม่เพื่อเริ่มต้น</Text><Pressable onPress={openCreate} style={styles.emptyButton}><Text style={styles.emptyButtonText}>เพิ่มเมนูแรก</Text></Pressable></View>}
+        {visibleProducts.map((product) => <ProductCard key={product.id} product={product} busy={saving} canManage={canManage} onEdit={() => openEdit(product)} onDelete={() => remove(product)} onToggle={() => { void toggleProduct(product); }} />)}
+        {visibleProducts.length === 0 && <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons color={appColors.primary} name="restaurant-outline" size={28} /></View><Text style={styles.emptyTitle}>ไม่พบเมนู</Text><Text style={styles.emptyText}>ลองเปลี่ยนคำค้นหา หรือเพิ่มเมนูใหม่เพื่อเริ่มต้น</Text>{canManage && <Pressable onPress={openCreate} style={styles.emptyButton}><Text style={styles.emptyButtonText}>เพิ่มเมนูแรก</Text></Pressable>}</View>}
       </ScrollView>
 
       <ProductModal visible={modalVisible} editing={Boolean(editingId)} draft={draft} error={formError} saving={saving} onChange={setDraft} onClose={() => setModalVisible(false)} onSave={() => { void save(); }} />
@@ -61,11 +64,11 @@ export default function ProductsScreen() {
   );
 }
 
-function ProductCard({ product, busy, onEdit, onDelete, onToggle }: { product: Product; busy: boolean; onEdit: () => void; onDelete: () => void; onToggle: () => void }) {
+function ProductCard({ product, busy, canManage, onEdit, onDelete, onToggle }: { product: Product; busy: boolean; canManage: boolean; onEdit: () => void; onDelete: () => void; onToggle: () => void }) {
   return <View style={styles.productCard}>
     <View style={styles.productImageWrap}>{product.imageUrl ? <Image source={{ uri: product.imageUrl }} style={styles.productImage} /> : <View style={styles.noImage}><Ionicons color={appColors.subtle} name="image-outline" size={22} /><Text style={styles.noImageText}>ไม่มีรูป</Text></View>}</View>
     <View style={styles.productCopy}><View style={styles.nameLine}><Text numberOfLines={2} style={styles.productName}>{product.name}</Text><View style={[styles.status, product.available ? styles.statusOn : styles.statusOff]}><Text style={[styles.statusText, product.available ? styles.statusTextOn : styles.statusTextOff]}>{product.available ? 'พร้อมขาย' : 'ปิดขาย'}</Text></View></View><Text style={styles.category}>{product.category}</Text><Text numberOfLines={2} style={styles.description}>{product.description || 'ยังไม่มีรายละเอียด'}</Text><Text style={styles.price}>฿{product.price.toLocaleString('th-TH')}</Text></View>
-    <View style={styles.actions}><Pressable disabled={busy} onPress={onEdit} style={styles.action}><Ionicons color={appColors.primary} name="create-outline" size={18} /></Pressable><Pressable disabled={busy} onPress={onToggle} style={styles.action}><Ionicons color={appColors.mint} name={product.available ? 'eye-off-outline' : 'eye-outline'} size={18} /></Pressable><Pressable disabled={busy} onPress={onDelete} style={[styles.action, styles.deleteAction]}><Ionicons color={appColors.danger} name="trash-outline" size={18} /></Pressable></View>
+    {canManage && <View style={styles.actions}><Pressable disabled={busy} onPress={onEdit} style={styles.action}><Ionicons color={appColors.primary} name="create-outline" size={18} /></Pressable><Pressable disabled={busy} onPress={onToggle} style={styles.action}><Ionicons color={appColors.mint} name={product.available ? 'eye-off-outline' : 'eye-outline'} size={18} /></Pressable><Pressable disabled={busy} onPress={onDelete} style={[styles.action, styles.deleteAction]}><Ionicons color={appColors.danger} name="trash-outline" size={18} /></Pressable></View>}
   </View>;
 }
 

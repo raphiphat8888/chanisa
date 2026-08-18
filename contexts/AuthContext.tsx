@@ -6,6 +6,7 @@ export type AppUser = {
   id: string;
   email: string;
   username: string;
+  role: 'admin' | 'user';
   isDemo?: boolean;
 };
 
@@ -22,7 +23,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function mapUser(user: ApiUser | null): AppUser | null {
-  return user ? { id: user.id, email: user.email, username: user.username } : null;
+  return user ? { id: user.id, email: user.email, username: user.username, role: user.role } : null;
 }
 
 export function AuthProvider({ children }: React.PropsWithChildren) {
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         return error instanceof Error ? error.message : 'สร้างบัญชีไม่สำเร็จ';
       }
     },
-    enterDemoMode: () => setDemoUser({ id: 'demo-user', email: 'demo@menupilot.local', username: 'demo', isDemo: true }),
+    enterDemoMode: () => setDemoUser({ id: 'demo-user', email: 'demo@menupilot.local', username: 'demo', role: 'admin', isDemo: true }),
     signOut: async () => {
       setDemoUser(null);
       await clearSession();

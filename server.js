@@ -47,8 +47,8 @@ function base64UrlDecode(value) {
   return Buffer.from(value, 'base64url').toString('utf8');
 }
 
-function createToken(username) {
-  const payload = base64UrlEncode(JSON.stringify({ username, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 12 }));
+function createToken(username, role) {
+  const payload = base64UrlEncode(JSON.stringify({ username, role, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 12 }));
   const signature = crypto.createHmac('sha256', process.env.APP_SECRET).update(payload).digest('hex');
   return `${payload}.${signature}`;
 }
@@ -68,7 +68,7 @@ function requireAuth(request) {
   if (!decoded.username || !decoded.exp || decoded.exp < Math.floor(Date.now() / 1000)) {
     throw new ApiError('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 401);
   }
-  return decoded.username;
+  return { username: decoded.username, role: decoded.role === 'admin' ? 'admin' : 'user' };
 }
 
 async function readJson(request) {
@@ -103,8 +103,8 @@ function hashPassword(password) {
   return `scrypt$${salt}$${hash}`;
 }
 
-function userResponse(username) {
-  return { id: username, username, email: username };
+function userResponse(username, role) {
+  return { id: username, username, email: username, role: role === 'admin' ? 'admin' : 'user' };
 }
 
 function validateProduct(input) {
@@ -148,11 +148,12 @@ async function handleApi(request, response, url) {
     const username = String(body.username || body.email || '').trim();
     const password = String(body.password || '');
     if (!username || !password) throw new ApiError('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
-    const [rows] = await pool.execute('SELECT user_name, user_password FROM user_pro WHERE user_name = ? LIMIT 1', [username]);
+    const [rows] = await pool.execute('SELECT user_name, user_password, role FROM user_pro WHERE user_name = ? LIMIT 1', [username]);
     if (rows.length === 0 || !passwordMatches(password, String(rows[0].user_password))) {
       throw new ApiError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 401);
     }
-    return sendJson(response, 200, { data: { user: userResponse(username), token: createToken(username) } });
+    const role = rows[0].role === 'admin' ? 'admin' : 'user';
+    return sendJson(response, 200, { data: { user: userResponse(username, role), token: createToken(username, role) } });
   }
 
   if (action === 'signup' && request.method === 'POST') {
@@ -161,15 +162,15 @@ async function handleApi(request, response, url) {
     const password = String(body.password || '');
     if (!username || password.length < 6) throw new ApiError('ชื่อผู้ใช้ต้องไม่ว่าง และรหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
     try {
-      await pool.execute('INSERT INTO user_pro (user_name, user_password) VALUES (?, ?)', [username, hashPassword(password)]);
+      await pool.execute('INSERT INTO user_pro (user_name, user_password, role) VALUES (?, ?, ?)', [username, hashPassword(password), 'user']);
     } catch (error) {
       if (error.code === 'ER_DUP_ENTRY') throw new ApiError('ชื่อผู้ใช้นี้มีอยู่แล้ว', 409);
       throw error;
     }
-    return sendJson(response, 201, { data: { user: userResponse(username), token: createToken(username) } });
+    return sendJson(response, 201, { data: { user: userResponse(username, 'user'), token: createToken(username, 'user') } });
   }
 
-  requireAuth(request);
+  const actor = requireAuth(request);
 
   if (action === 'products' && request.method === 'GET') {
     const [rows] = await pool.query('SELECT id, productname, colors, price, img, description, available FROM Product ORDER BY id DESC');
@@ -177,12 +178,14 @@ async function handleApi(request, response, url) {
   }
 
   if (action === 'create-product' && request.method === 'POST') {
+    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่เพิ่มเมนูได้', 403);
     const product = validateProduct(await readJson(request));
     const [result] = await pool.execute('INSERT INTO Product (productname, colors, price, img, description, available) VALUES (?, ?, ?, ?, ?, ?)', [product.name, product.category, product.price, product.imageUrl, product.description, product.available ? 1 : 0]);
     return sendJson(response, 201, { data: await findProduct(result.insertId) });
   }
 
   if (action === 'update-product' && request.method === 'POST') {
+    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่แก้ไขเมนูได้', 403);
     const body = await readJson(request);
     const id = Number(body.id);
     if (!Number.isInteger(id) || id < 1) throw new ApiError('รหัสเมนูไม่ถูกต้อง');
@@ -192,6 +195,7 @@ async function handleApi(request, response, url) {
   }
 
   if (action === 'delete-product' && request.method === 'DELETE') {
+    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่ลบเมนูได้', 403);
     const id = Number(url.searchParams.get('id'));
     if (!Number.isInteger(id) || id < 1) throw new ApiError('รหัสเมนูไม่ถูกต้อง');
     const [result] = await pool.execute('DELETE FROM Product WHERE id = ?', [id]);

@@ -1,6 +1,6 @@
 # MenuPilot
 
-ระบบจัดการเมนูอาหารสำหรับร้านอาหาร สร้างด้วย Expo SDK 54, React Native, TypeScript และ Expo Router โดยเชื่อม MySQL ผ่าน PHP API
+ระบบจัดการเมนูอาหารสำหรับร้านอาหาร สร้างด้วย Expo SDK 54, React Native, TypeScript และ Expo Router โดยเชื่อม MySQL ผ่าน Node.js API
 
 ## สิ่งที่ทำไว้
 
@@ -8,6 +8,7 @@
 - Navigation จริง: ภาพรวม, เมนู, ออเดอร์, ตั้งค่า
 - ข้อมูล seed ใน `data/products.json`
 - Login และสร้างบัญชีจากตาราง `user_pro` ใน MySQL
+- แยกสิทธิ์ `admin` สำหรับเพิ่ม/แก้ไข/ลบเมนู และ `user` สำหรับดูข้อมูล
 - CRUD เมนูจากตาราง `Product` ใน MySQL
 - เพิ่ม แก้ไข ลบ เปิด/ปิดการขาย และค้นหาเมนู
 - โหมดตัวอย่างสำหรับเปิดดู UI และทดสอบ CRUD โดยไม่ต้องมี Cloud config
@@ -48,6 +49,8 @@ npx expo start
 หากยังไม่มี `.env.local` ให้เลือก `เข้าโหมดตัวอย่าง` ในหน้า Login เพื่อทดสอบหน้าจอและ CRUD แบบ local
 
 หมายเหตุ: ตาราง `Product` เดิมใช้ชื่อคอลัมน์ `colors` เป็นหมวดหมู่ และ API จะแปลงเป็น `category` ให้ Expo อัตโนมัติ หากนำขึ้น production ควรใช้ HTTPS แทน HTTP
+
+หากมีตาราง `user_pro` อยู่แล้ว ให้รัน `backend/role-migration.sql` หนึ่งครั้ง แล้วเปลี่ยน `YOUR_ADMIN_USERNAME` เป็นชื่อผู้ใช้ของผู้ดูแลระบบ
 
 ## GitHub
 

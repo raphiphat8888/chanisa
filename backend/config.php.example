@@ -3,7 +3,7 @@
 // Never commit config.php or expose these values to the Expo app.
 return [
     'db_host' => 'localhost',
-    'db_name' => 'it_std6730202084',
+    'db_name' => 'ip_std6730202084',
     'db_user' => 'your_database_user',
     'db_pass' => 'your_database_password',
     'app_secret' => 'replace-with-a-long-random-secret',

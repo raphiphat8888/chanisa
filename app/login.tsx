@@ -71,7 +71,7 @@ export default function LoginScreen() {
           {!configured && (
             <View style={styles.demoBox}>
               <Text style={styles.demoTitle}>โหมดตัวอย่างสำหรับดูหน้าจอ</Text>
-              <Text style={styles.demoText}>ยังไม่มีค่า Supabase ในเครื่องนี้ จึงเปิดโหมดตัวอย่างให้ทดสอบ UI และ CRUD ได้ก่อน</Text>
+              <Text style={styles.demoText}>ยังไม่ได้ตั้งค่า API ในเครื่องนี้ จึงเปิดโหมดตัวอย่างให้ทดสอบ UI และ CRUD ได้ก่อน</Text>
               <Pressable onPress={enterDemoMode} style={styles.demoButton}><Text style={styles.demoButtonText}>เข้าโหมดตัวอย่าง</Text></Pressable>
             </View>
           )}
