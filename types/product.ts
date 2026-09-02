@@ -1,4 +1,4 @@
-export const productCategories = ['จานหลัก', 'เส้น', 'ของทานเล่น', 'เครื่องดื่ม'] as const;
+export const productCategories = ['จานหลัก', 'เส้น', 'ของทานเล่น', 'เครื่องดื่ม', 'ของหวาน'] as const;
 
 export type ProductCategory = (typeof productCategories)[number];
 

@@ -41,7 +41,7 @@ export default function LoginScreen() {
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.brandRow}>
-          <View style={styles.brandMark}><Text style={styles.brandMarkText}>M</Text></View>
+          <View style={styles.brandMark}><Text style={styles.brandMarkText}>☕</Text></View>
           <View><Text style={styles.brandName}>MENUPILOT</Text><Text style={styles.brandCaption}>RESTAURANT CONTROL ROOM</Text></View>
         </View>
 
@@ -96,13 +96,13 @@ const styles = StyleSheet.create({
   title: { color: appColors.ink, fontSize: 39, fontWeight: '900', letterSpacing: -1.1, lineHeight: 43 },
   subtitle: { color: appColors.muted, fontSize: 14, lineHeight: 22, marginTop: 14, maxWidth: 420 },
   card: { backgroundColor: appColors.surface, borderColor: appColors.border, borderRadius: appRadius.card, borderWidth: 1, padding: 20 },
-  modeRow: { backgroundColor: '#F4F5F9', borderRadius: 11, flexDirection: 'row', marginBottom: 22, padding: 4 },
+  modeRow: { backgroundColor: '#F7EDE6', borderRadius: 11, flexDirection: 'row', marginBottom: 22, padding: 4 },
   modeButton: { alignItems: 'center', borderRadius: 8, flex: 1, justifyContent: 'center', minHeight: 40 },
   modeButtonActive: { backgroundColor: '#FFF', elevation: 2, shadowColor: '#313A55', shadowOpacity: 0.08, shadowRadius: 7 },
   modeText: { color: appColors.muted, fontSize: 12, fontWeight: '800' },
   modeTextActive: { color: appColors.ink },
   label: { color: appColors.ink, fontSize: 11, fontWeight: '900', marginBottom: 8, marginTop: 13 },
-  input: { backgroundColor: '#FAFBFD', borderColor: appColors.border, borderRadius: appRadius.control, borderWidth: 1, color: appColors.ink, fontSize: 14, minHeight: 48, paddingHorizontal: 14 },
+  input: { backgroundColor: '#FFFCF9', borderColor: appColors.border, borderRadius: appRadius.control, borderWidth: 1, color: appColors.ink, fontSize: 14, minHeight: 48, paddingHorizontal: 14 },
   message: { color: appColors.danger, fontSize: 12, lineHeight: 18, marginTop: 13 },
   submit: { alignItems: 'center', backgroundColor: appColors.primary, borderRadius: appRadius.control, justifyContent: 'center', marginTop: 20, minHeight: 50 },
   submitText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   demoBox: { backgroundColor: appColors.primarySoft, borderRadius: appRadius.control, marginTop: 18, padding: 14 },
   demoTitle: { color: appColors.primaryDark, fontSize: 12, fontWeight: '900' },
-  demoText: { color: '#655C86', fontSize: 11, lineHeight: 17, marginTop: 5 },
-  demoButton: { alignItems: 'center', borderColor: '#CFC5FF', borderRadius: 9, borderWidth: 1, justifyContent: 'center', marginTop: 11, minHeight: 40 },
+  demoText: { color: '#80665C', fontSize: 11, lineHeight: 17, marginTop: 5 },
+  demoButton: { alignItems: 'center', borderColor: '#E8BFAE', borderRadius: 9, borderWidth: 1, justifyContent: 'center', marginTop: 11, minHeight: 40 },
   demoButtonText: { color: appColors.primaryDark, fontSize: 11, fontWeight: '900' },
   footer: { color: appColors.subtle, fontSize: 8, fontWeight: '900', letterSpacing: 1.8, marginTop: 24, textAlign: 'center' },
 });

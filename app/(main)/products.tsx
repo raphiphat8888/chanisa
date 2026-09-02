@@ -76,7 +76,7 @@ export default function ProductsScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.list} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}><View><Text style={styles.eyebrow}>PRODUCT OPERATIONS</Text><Text style={styles.title}>จัดการเมนู</Text><Text style={styles.subtitle}>{canManage ? 'เพิ่ม แก้ไข ค้นหา และควบคุมสถานะขาย' : 'ค้นหาและดูรายการเมนู'}</Text></View>{canManage && <Pressable onPress={openCreate} style={styles.addButton}><Ionicons color="#FFF" name="add" size={18} /><Text style={styles.addButtonText}>เพิ่มเมนู</Text></Pressable>}</View>
+        <View style={styles.header}><View><Text style={styles.eyebrow}>PRODUCT OPERATIONS</Text><Text style={styles.title}>จัดการเมนู 🍰</Text><Text style={styles.subtitle}>{canManage ? 'เพิ่ม แก้ไข ค้นหา และควบคุมสถานะขาย' : 'ค้นหาและดูรายการเมนู'}</Text></View>{canManage && <Pressable onPress={openCreate} style={styles.addButton}><Ionicons color="#FFF" name="add" size={18} /><Text style={styles.addButtonText}>เพิ่มเมนู 🍓</Text></Pressable>}</View>
 
         {!!(error || formError) && <View style={styles.errorBox}><Ionicons color={appColors.danger} name="warning-outline" size={17} /><Text style={styles.errorText}>{formError || error}</Text></View>}
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   searchInput: { color: appColors.ink, flex: 1, fontSize: 12, marginLeft: 8 },
   resultCount: { color: appColors.primary, fontSize: 12, fontWeight: '900' },
   filterRow: { gap: 8, paddingBottom: 24, paddingTop: 13 },
-  filter: { backgroundColor: '#F0F1F6', borderRadius: appRadius.pill, paddingHorizontal: 15, paddingVertical: 9 },
+  filter: { backgroundColor: '#F7EDE6', borderRadius: appRadius.pill, paddingHorizontal: 15, paddingVertical: 9 },
   filterActive: { backgroundColor: appColors.primarySoft },
   filterText: { color: appColors.muted, fontSize: 10, fontWeight: '800' },
   filterTextActive: { color: appColors.primary },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   listTitle: { color: appColors.ink, fontSize: 17, fontWeight: '900' },
   listCount: { color: appColors.muted, fontSize: 10, fontWeight: '800' },
   productCard: { alignItems: 'center', backgroundColor: appColors.surface, borderColor: appColors.border, borderRadius: appRadius.card, borderWidth: 1, flexDirection: 'row', gap: 10, marginBottom: 10, padding: 12 },
-  productImageWrap: { backgroundColor: '#F2F3F7', borderRadius: 12, height: 82, overflow: 'hidden', width: 92 },
+  productImageWrap: { backgroundColor: '#F8EDE4', borderRadius: 12, height: 82, overflow: 'hidden', width: 92 },
   productImage: { height: '100%', width: '100%' },
   noImage: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   noImageText: { color: appColors.subtle, fontSize: 8, marginTop: 4 },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   statusTextOn: { color: appColors.mint },
   statusTextOff: { color: appColors.muted },
   actions: { gap: 5 },
-  action: { alignItems: 'center', backgroundColor: '#F2EFFF', borderRadius: 9, height: 34, justifyContent: 'center', width: 34 },
+  action: { alignItems: 'center', backgroundColor: '#FBE9DF', borderRadius: 9, height: 34, justifyContent: 'center', width: 34 },
   deleteAction: { backgroundColor: appColors.dangerSoft },
   empty: { alignItems: 'center', backgroundColor: appColors.surface, borderColor: appColors.border, borderRadius: appRadius.card, borderWidth: 1, padding: 34 },
   emptyIcon: { alignItems: 'center', backgroundColor: appColors.primarySoft, borderRadius: 18, height: 58, justifyContent: 'center', width: 58 },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   imageButtonText: { color: appColors.primary, fontSize: 11, fontWeight: '900' },
   textarea: { minHeight: 78, paddingTop: 12, textAlignVertical: 'top' },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  categoryChip: { backgroundColor: '#F1F2F6', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 9 },
+  categoryChip: { backgroundColor: '#F7EDE6', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 9 },
   categoryChipActive: { backgroundColor: appColors.primarySoft },
   categoryChipText: { color: appColors.muted, fontSize: 10, fontWeight: '800' },
   categoryChipTextActive: { color: appColors.primary },

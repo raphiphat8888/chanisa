@@ -22,12 +22,12 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <View><Text style={styles.eyebrow}>MONDAY • 16 AUG 2026</Text><Text style={styles.title}>สวัสดี, ผู้ดูแลร้าน</Text></View>
+        <View><Text style={styles.eyebrow}>MONDAY • 16 AUG 2026</Text><Text style={styles.title}>สวัสดี, ผู้ดูแลร้าน ☕</Text></View>
         <View style={styles.avatar}><Text style={styles.avatarText}>{user?.email.slice(0, 1).toUpperCase() ?? 'M'}</Text></View>
       </View>
 
       <View style={styles.hero}>
-        <View style={styles.heroCopy}><Text style={styles.heroEyebrow}>TODAY’S CONTROL ROOM</Text><Text style={styles.heroTitle}>ร้านพร้อมขาย{ '\n' }แค่ไหนแล้ว?</Text><Text style={styles.heroBody}>จัดการเมนูให้สดใหม่ ตรวจสถานะ และดูภาพรวมได้ในไม่กี่วินาที</Text></View>
+        <View style={styles.heroCopy}><Text style={styles.heroEyebrow}>TODAY’S CONTROL ROOM ✨</Text><Text style={styles.heroTitle}>ร้านพร้อมขาย{ '\n' }แค่ไหนแล้ว?</Text><Text style={styles.heroBody}>จัดการเมนูให้สดใหม่ ตรวจสถานะ และดูภาพรวมได้ในไม่กี่วินาที</Text></View>
         <View style={styles.heroOrb}><Ionicons color="#FFF" name="sparkles-outline" size={30} /></View>
       </View>
 
@@ -36,7 +36,7 @@ export default function DashboardScreen() {
         <StatCard icon="restaurant-outline" label="เมนูทั้งหมด" value={products.length} tint={appColors.primary} />
         <StatCard icon="checkmark-circle-outline" label="พร้อมขาย" value={available} tint={appColors.mint} />
         <StatCard icon="pause-circle-outline" label="ปิดขาย" value={unavailable} tint={appColors.danger} />
-        <StatCard icon="pricetags-outline" label="หมวดหมู่" value={categoryCount} tint="#D59A2A" />
+        <StatCard icon="pricetags-outline" label="หมวดหมู่" value={categoryCount} tint="#B9825B" />
       </View>
 
       <View style={styles.sectionHeading}><View><Text style={styles.sectionTitle}>เมนูที่อัปเดตล่าสุด</Text><Text style={styles.sectionSub}>ตรวจสอบรายการที่ลูกค้าเห็น</Text></View><Pressable onPress={() => router.push('/products')}><Text style={styles.link}>ดูทั้งหมด  →</Text></Pressable></View>
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   avatarText: { color: '#FFF', fontSize: 16, fontWeight: '900' },
   hero: { backgroundColor: appColors.dark, borderRadius: appRadius.card, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28, minHeight: 190, overflow: 'hidden', padding: 23 },
   heroCopy: { maxWidth: 470 },
-  heroEyebrow: { color: '#B8A9FF', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  heroEyebrow: { color: '#F2B79C', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
   heroTitle: { color: '#FFF', fontSize: 28, fontWeight: '900', letterSpacing: -0.6, lineHeight: 32 },
   heroBody: { color: '#A4A6B2', fontSize: 12, lineHeight: 19, marginTop: 12, maxWidth: 350 },
   heroOrb: { alignItems: 'center', backgroundColor: appColors.primary, borderRadius: 40, height: 72, justifyContent: 'center', marginRight: 3, marginTop: 4, width: 72 },
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   recentCard: { backgroundColor: appColors.surface, borderColor: appColors.border, borderRadius: appRadius.card, borderWidth: 1, paddingHorizontal: 16 },
   recentRow: { alignItems: 'center', flexDirection: 'row', minHeight: 68, paddingVertical: 10 },
   rowBorder: { borderBottomColor: appColors.border, borderBottomWidth: 1 },
-  recentNumber: { alignItems: 'center', backgroundColor: '#F3F0FF', borderRadius: 9, height: 35, justifyContent: 'center', marginRight: 12, width: 35 },
+  recentNumber: { alignItems: 'center', backgroundColor: '#FBE5D8', borderRadius: 9, height: 35, justifyContent: 'center', marginRight: 12, width: 35 },
   recentNumberText: { color: appColors.primary, fontSize: 10, fontWeight: '900' },
   recentCopy: { flex: 1, minWidth: 0 },
   recentName: { color: appColors.ink, fontSize: 13, fontWeight: '900' },
