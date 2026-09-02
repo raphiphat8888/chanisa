@@ -111,6 +111,13 @@ function userResponse(username, role) {
   return { id: username, username, email: username, role: role === 'admin' ? 'admin' : 'user' };
 }
 
+async function requireAdmin(actor) {
+  const [rows] = await pool.execute('SELECT role FROM user_pro WHERE user_name = ? LIMIT 1', [actor.username]);
+  if (rows.length === 0 || rows[0].role !== 'admin') {
+    throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการเมนูได้', 403);
+  }
+}
+
 function validateProduct(input) {
   const name = String(input.name || '').trim();
   const category = String(input.category || 'ทั่วไป').trim() || 'ทั่วไป';
@@ -177,7 +184,7 @@ async function handleApi(request, response, url) {
   const actor = requireAuth(request);
 
   if (action === 'upload-image' && request.method === 'POST') {
-    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่อัปโหลดรูปได้', 403);
+    await requireAdmin(actor);
     const body = await readJson(request);
     const mimeType = String(body.mimeType || '').toLowerCase();
     const extensionByMime = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -205,14 +212,14 @@ async function handleApi(request, response, url) {
   }
 
   if (action === 'create-product' && request.method === 'POST') {
-    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่เพิ่มเมนูได้', 403);
+    await requireAdmin(actor);
     const product = validateProduct(await readJson(request));
     const [result] = await pool.execute('INSERT INTO Product (productname, colors, price, img, description, available) VALUES (?, ?, ?, ?, ?, ?)', [product.name, product.category, product.price, product.imageUrl, product.description, product.available ? 1 : 0]);
     return sendJson(response, 201, { data: await findProduct(result.insertId) });
   }
 
   if (action === 'update-product' && request.method === 'POST') {
-    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่แก้ไขเมนูได้', 403);
+    await requireAdmin(actor);
     const body = await readJson(request);
     const id = Number(body.id);
     if (!Number.isInteger(id) || id < 1) throw new ApiError('รหัสเมนูไม่ถูกต้อง');
@@ -222,7 +229,7 @@ async function handleApi(request, response, url) {
   }
 
   if (action === 'delete-product' && request.method === 'DELETE') {
-    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่ลบเมนูได้', 403);
+    await requireAdmin(actor);
     const id = Number(url.searchParams.get('id'));
     if (!Number.isInteger(id) || id < 1) throw new ApiError('รหัสเมนูไม่ถูกต้อง');
     const [result] = await pool.execute('DELETE FROM Product WHERE id = ?', [id]);
