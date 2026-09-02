@@ -41,7 +41,7 @@ try {
         signup($pdo, $config);
     }
 
-    requireAuth($config);
+    $actor = requireAuth($config);
 
     if ($action === 'products' && $method === 'GET') {
         $rows = $pdo->query('SELECT id, productname, colors, price, img, description, available FROM Product ORDER BY id DESC')->fetchAll();
@@ -49,6 +49,7 @@ try {
     }
 
     if ($action === 'create-product' && $method === 'POST') {
+        requireAdmin($actor);
         $input = requestBody();
         $product = validateProduct($input);
         $statement = $pdo->prepare('INSERT INTO Product (productname, colors, price, img, description, available) VALUES (?, ?, ?, ?, ?, ?)');
@@ -57,6 +58,7 @@ try {
     }
 
     if ($action === 'update-product' && $method === 'POST') {
+        requireAdmin($actor);
         $input = requestBody();
         $id = positiveInt($input['id'] ?? null, 'รหัสเมนูไม่ถูกต้อง');
         $product = validateProduct($input);
@@ -69,6 +71,7 @@ try {
     }
 
     if ($action === 'delete-product' && $method === 'DELETE') {
+        requireAdmin($actor);
         $id = positiveInt($_GET['id'] ?? null, 'รหัสเมนูไม่ถูกต้อง');
         $statement = $pdo->prepare('DELETE FROM Product WHERE id = ?');
         $statement->execute([$id]);
@@ -104,14 +107,15 @@ function login(PDO $pdo, array $config): never
         throw new ApiException('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
     }
 
-    $statement = $pdo->prepare('SELECT user_name, user_password FROM user_pro WHERE user_name = ? LIMIT 1');
+    $statement = $pdo->prepare('SELECT user_name, user_password, role FROM user_pro WHERE user_name = ? LIMIT 1');
     $statement->execute([$username]);
     $user = $statement->fetch();
     if (!$user || !passwordMatches($password, (string) $user['user_password'])) {
         throw new ApiException('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 401);
     }
 
-    respond(['data' => ['user' => userResponse((string) $user['user_name']), 'token' => createToken((string) $user['user_name'], $config['app_secret'])]]);
+    $role = ($user['role'] ?? 'user') === 'admin' ? 'admin' : 'user';
+    respond(['data' => ['user' => userResponse((string) $user['user_name'], $role), 'token' => createToken((string) $user['user_name'], $role, $config['app_secret'])]]);
 }
 
 /** @param array<string, string> $config */
@@ -134,11 +138,11 @@ function signup(PDO $pdo, array $config): never
         throw $error;
     }
 
-    respond(['data' => ['user' => userResponse($username), 'token' => createToken($username, $config['app_secret'])]], 201);
+    respond(['data' => ['user' => userResponse($username, 'user'), 'token' => createToken($username, 'user', $config['app_secret'])]], 201);
 }
 
 /** @param array<string, string> $config */
-function requireAuth(array $config): string
+function requireAuth(array $config): array
 {
     $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (!preg_match('/^Bearer\s+(.+)$/i', $header, $matches)) {
@@ -158,12 +162,19 @@ function requireAuth(array $config): string
     if (!is_array($decoded) || !isset($decoded['username'], $decoded['exp']) || (int) $decoded['exp'] < time()) {
         throw new ApiException('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 401);
     }
-    return (string) $decoded['username'];
+    return ['username' => (string) $decoded['username'], 'role' => ($decoded['role'] ?? 'user') === 'admin' ? 'admin' : 'user'];
 }
 
-function createToken(string $username, string $secret): string
+function requireAdmin(array $actor): void
 {
-    $payload = base64UrlEncode((string) json_encode(['username' => $username, 'exp' => time() + 60 * 60 * 12], JSON_THROW_ON_ERROR));
+    if (($actor['role'] ?? 'user') !== 'admin') {
+        throw new ApiException('เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการเมนูได้', 403);
+    }
+}
+
+function createToken(string $username, string $role, string $secret): string
+{
+    $payload = base64UrlEncode((string) json_encode(['username' => $username, 'role' => $role, 'exp' => time() + 60 * 60 * 12], JSON_THROW_ON_ERROR));
     return $payload . '.' . hash_hmac('sha256', $payload, $secret);
 }
 
@@ -236,9 +247,9 @@ function productResponse(array $row): array
     ];
 }
 
-function userResponse(string $username): array
+function userResponse(string $username, string $role = 'user'): array
 {
-    return ['id' => $username, 'username' => $username, 'email' => $username];
+    return ['id' => $username, 'username' => $username, 'email' => $username, 'role' => $role === 'admin' ? 'admin' : 'user'];
 }
 
 function base64UrlEncode(string $value): string

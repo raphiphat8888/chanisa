@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -6,6 +7,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { appColors, appRadius, appSpacing } from '@/constants/appTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProducts } from '@/contexts/ProductsContext';
+import { uploadProductImage } from '@/lib/api';
 import { productCategories, type Product, type ProductInput } from '@/types/product';
 
 const filters = ['ทั้งหมด', ...productCategories];
@@ -14,13 +16,14 @@ const emptyProduct: ProductInput = { name: '', category: productCategories[0], p
 export default function ProductsScreen() {
   const { products, loading, saving, error, createProduct, updateProduct, deleteProduct, toggleProduct } = useProducts();
   const { user } = useAuth();
-  const canManage = user?.role === 'admin';
+  const canManage = user?.role === 'admin' || user?.username.trim().toLowerCase() === 'admin';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('ทั้งหมด');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ProductInput>(emptyProduct);
   const [formError, setFormError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const visibleProducts = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -42,6 +45,32 @@ export default function ProductsScreen() {
     if (ok) setModalVisible(false);
   };
 
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setFormError('กรุณาอนุญาตให้แอปเข้าถึงรูปภาพ');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0].base64) return;
+    setUploading(true);
+    setFormError('');
+    try {
+      const imageUrl = await uploadProductImage(result.assets[0].base64, result.assets[0].mimeType ?? 'image/jpeg');
+      setDraft((current) => ({ ...current, imageUrl }));
+    } catch (uploadError) {
+      setFormError(uploadError instanceof Error ? uploadError.message : 'อัปโหลดรูปไม่สำเร็จ');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const remove = (product: Product) => Alert.alert('ลบเมนูนี้?', `ต้องการลบ “${product.name}” ออกจากระบบหรือไม่`, [{ text: 'ยกเลิก', style: 'cancel' }, { text: 'ลบเมนู', style: 'destructive', onPress: () => { void deleteProduct(product.id); } }]);
 
   return (
@@ -59,7 +88,7 @@ export default function ProductsScreen() {
         {visibleProducts.length === 0 && <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons color={appColors.primary} name="restaurant-outline" size={28} /></View><Text style={styles.emptyTitle}>ไม่พบเมนู</Text><Text style={styles.emptyText}>ลองเปลี่ยนคำค้นหา หรือเพิ่มเมนูใหม่เพื่อเริ่มต้น</Text>{canManage && <Pressable onPress={openCreate} style={styles.emptyButton}><Text style={styles.emptyButtonText}>เพิ่มเมนูแรก</Text></Pressable>}</View>}
       </ScrollView>
 
-      <ProductModal visible={modalVisible} editing={Boolean(editingId)} draft={draft} error={formError} saving={saving} onChange={setDraft} onClose={() => setModalVisible(false)} onSave={() => { void save(); }} />
+      <ProductModal visible={modalVisible} editing={Boolean(editingId)} draft={draft} error={formError} saving={saving || uploading} uploading={uploading} onChange={setDraft} onPickImage={() => { void pickImage(); }} onClose={() => setModalVisible(false)} onSave={() => { void save(); }} />
     </View>
   );
 }
@@ -72,13 +101,13 @@ function ProductCard({ product, busy, canManage, onEdit, onDelete, onToggle }: {
   </View>;
 }
 
-function ProductModal({ visible, editing, draft, error, saving, onChange, onClose, onSave }: { visible: boolean; editing: boolean; draft: ProductInput; error: string; saving: boolean; onChange: (draft: ProductInput) => void; onClose: () => void; onSave: () => void }) {
+function ProductModal({ visible, editing, draft, error, saving, uploading, onChange, onPickImage, onClose, onSave }: { visible: boolean; editing: boolean; draft: ProductInput; error: string; saving: boolean; uploading: boolean; onChange: (draft: ProductInput) => void; onPickImage: () => void; onClose: () => void; onSave: () => void }) {
   return <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}><View style={styles.overlay}><ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled"><View style={styles.modalCard}><View style={styles.modalHeader}><View><Text style={styles.modalEyebrow}>{editing ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</Text><Text style={styles.modalTitle}>{editing ? 'แก้ไขเมนู' : 'เพิ่มเมนูอาหาร'}</Text></View><Pressable onPress={onClose}><Ionicons color={appColors.muted} name="close" size={24} /></Pressable></View>
     <Text style={styles.fieldLabel}>ชื่อเมนู *</Text><TextInput value={draft.name} onChangeText={(name) => onChange({ ...draft, name })} placeholder="เช่น ข้าวกะเพรา" placeholderTextColor={appColors.subtle} style={styles.input} />
     <Text style={styles.fieldLabel}>ราคา (บาท) *</Text><TextInput keyboardType="decimal-pad" value={draft.price ? String(draft.price) : ''} onChangeText={(value) => onChange({ ...draft, price: Number(value.replace(/[^0-9.]/g, '')) || 0 })} placeholder="0" placeholderTextColor={appColors.subtle} style={styles.input} />
     <Text style={styles.fieldLabel}>หมวดหมู่</Text><View style={styles.categoryRow}>{productCategories.map((category) => <Pressable key={category} onPress={() => onChange({ ...draft, category })} style={[styles.categoryChip, draft.category === category && styles.categoryChipActive]}><Text style={[styles.categoryChipText, draft.category === category && styles.categoryChipTextActive]}>{category}</Text></Pressable>)}</View>
     <Text style={styles.fieldLabel}>รายละเอียด</Text><TextInput multiline value={draft.description} onChangeText={(description) => onChange({ ...draft, description })} placeholder="รายละเอียดสั้น ๆ ของเมนู" placeholderTextColor={appColors.subtle} style={[styles.input, styles.textarea]} />
-    <Text style={styles.fieldLabel}>URL รูปอาหาร</Text><TextInput autoCapitalize="none" value={draft.imageUrl} onChangeText={(imageUrl) => onChange({ ...draft, imageUrl })} placeholder="https://..." placeholderTextColor={appColors.subtle} style={styles.input} />
+    <Text style={styles.fieldLabel}>รูปอาหาร</Text>{draft.imageUrl ? <Image source={{ uri: draft.imageUrl }} style={styles.imagePreview} /> : null}<Pressable disabled={saving} onPress={onPickImage} style={styles.imageButton}>{uploading ? <ActivityIndicator color={appColors.primary} size="small" /> : <Ionicons color={appColors.primary} name="image-outline" size={18} />}<Text style={styles.imageButtonText}>{uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปจากเครื่อง'}</Text></Pressable><TextInput autoCapitalize="none" value={draft.imageUrl} onChangeText={(imageUrl) => onChange({ ...draft, imageUrl })} placeholder="หรือวาง URL รูปภาพ" placeholderTextColor={appColors.subtle} style={styles.input} />
     <Pressable onPress={() => onChange({ ...draft, available: !draft.available })} style={styles.availableRow}><View style={[styles.checkbox, draft.available && styles.checkboxActive]}>{draft.available && <Ionicons color="#FFF" name="checkmark" size={14} />}</View><Text style={styles.availableText}>เปิดขายเมนูนี้</Text></Pressable>
     {!!error && <Text style={styles.modalError}>{error}</Text>}
     <View style={styles.modalActions}><Pressable disabled={saving} onPress={onClose} style={styles.cancelButton}><Text style={styles.cancelText}>ยกเลิก</Text></Pressable><Pressable disabled={saving} onPress={onSave} style={[styles.saveButton, saving && styles.disabled]}>{saving ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.saveText}>{editing ? 'บันทึกการแก้ไข' : 'เพิ่มเมนู'}</Text>}</Pressable></View>
@@ -142,6 +171,9 @@ const styles = StyleSheet.create({
   modalTitle: { color: appColors.ink, fontSize: 21, fontWeight: '900', marginTop: 4 },
   fieldLabel: { color: appColors.ink, fontSize: 11, fontWeight: '900', marginBottom: 7, marginTop: 14 },
   input: { borderColor: appColors.border, borderRadius: appRadius.control, borderWidth: 1, color: appColors.ink, fontSize: 13, minHeight: 46, paddingHorizontal: 12 },
+  imagePreview: { borderRadius: 12, height: 150, marginBottom: 8, width: '100%' },
+  imageButton: { alignItems: 'center', borderColor: appColors.primary, borderRadius: appRadius.control, borderWidth: 1, flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 44, marginBottom: 8 },
+  imageButtonText: { color: appColors.primary, fontSize: 11, fontWeight: '900' },
   textarea: { minHeight: 78, paddingTop: 12, textAlignVertical: 'top' },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   categoryChip: { backgroundColor: '#F1F2F6', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 9 },

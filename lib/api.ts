@@ -58,10 +58,16 @@ export async function signUp(username: string, password: string) {
 
 export async function restoreUser(): Promise<ApiUser | null> {
   const storedUser = await AsyncStorage.getItem(userKey);
-  if (!storedUser) return null;
+  const storedToken = await AsyncStorage.getItem(tokenKey);
+  if (!storedUser || !storedToken) return null;
   try {
-    return JSON.parse(storedUser) as ApiUser;
-  } catch {
+    const currentUser = await request<ApiUser>('api.php?action=me');
+    await AsyncStorage.setItem(userKey, JSON.stringify(currentUser));
+    return currentUser;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'ไม่พบคำสั่ง API นี้') {
+      return JSON.parse(storedUser) as ApiUser;
+    }
     await clearSession();
     return null;
   }
@@ -74,6 +80,14 @@ export async function clearSession() {
 export async function getProducts() {
   const result = await request<Product[]>('api.php?action=products');
   return result;
+}
+
+export async function uploadProductImage(imageData: string, mimeType: string) {
+  const result = await request<{ url: string }>('api.php?action=upload-image', {
+    method: 'POST',
+    body: JSON.stringify({ imageData, mimeType }),
+  });
+  return result.url;
 }
 
 export async function createProduct(input: ProductInput) {

@@ -1,5 +1,7 @@
 const http = require('node:http');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 const { URL } = require('node:url');
 const dotenv = require('dotenv');
 const mysql = require('mysql2/promise');
@@ -21,6 +23,8 @@ const pool = mysql.createPool({
   connectionLimit: 5,
   charset: 'utf8mb4',
 });
+const uploadDirectory = path.join(__dirname, 'uploads');
+fs.mkdirSync(uploadDirectory, { recursive: true });
 
 class ApiError extends Error {
   constructor(message, status = 400) {
@@ -76,7 +80,7 @@ async function readJson(request) {
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > 1024 * 1024) throw new ApiError('ข้อมูลมีขนาดใหญ่เกินไป', 413);
+    if (size > 8 * 1024 * 1024) throw new ApiError('ข้อมูลมีขนาดใหญ่เกินไป', 413);
     chunks.push(chunk);
   }
   if (chunks.length === 0) return {};
@@ -172,6 +176,29 @@ async function handleApi(request, response, url) {
 
   const actor = requireAuth(request);
 
+  if (action === 'upload-image' && request.method === 'POST') {
+    if (actor.role !== 'admin') throw new ApiError('เฉพาะผู้ดูแลระบบเท่านั้นที่อัปโหลดรูปได้', 403);
+    const body = await readJson(request);
+    const mimeType = String(body.mimeType || '').toLowerCase();
+    const extensionByMime = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+    const extension = extensionByMime[mimeType];
+    const imageData = String(body.imageData || '');
+    if (!extension || !/^[a-z0-9+/=]+$/i.test(imageData)) throw new ApiError('รองรับเฉพาะไฟล์ JPG, PNG หรือ WEBP');
+    const imageBuffer = Buffer.from(imageData, 'base64');
+    if (imageBuffer.length === 0 || imageBuffer.length > 5 * 1024 * 1024) throw new ApiError('รูปต้องมีขนาดไม่เกิน 5 MB');
+    const fileName = `product-${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${extension}`;
+    fs.writeFileSync(path.join(uploadDirectory, fileName), imageBuffer);
+    const origin = `http://${request.headers.host || 'localhost:3011'}`;
+    return sendJson(response, 201, { data: { url: `${origin}/uploads/${fileName}` } });
+  }
+
+  if (action === 'me' && request.method === 'GET') {
+    const [rows] = await pool.execute('SELECT user_name, role FROM user_pro WHERE user_name = ? LIMIT 1', [actor.username]);
+    if (rows.length === 0) throw new ApiError('ไม่พบบัญชีผู้ใช้งาน', 401);
+    const role = rows[0].role === 'admin' ? 'admin' : 'user';
+    return sendJson(response, 200, { data: userResponse(actor.username, role) });
+  }
+
   if (action === 'products' && request.method === 'GET') {
     const [rows] = await pool.query('SELECT id, productname, colors, price, img, description, available FROM Product ORDER BY id DESC');
     return sendJson(response, 200, { data: rows.map(productResponse) });
@@ -218,6 +245,14 @@ const server = http.createServer(async (request, response) => {
 
   const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
   if (url.pathname === '/health') return sendJson(response, 200, { ok: true });
+  if (url.pathname.startsWith('/uploads/')) {
+    const fileName = path.basename(url.pathname);
+    const filePath = path.join(uploadDirectory, fileName);
+    if (!fs.existsSync(filePath)) return sendJson(response, 404, { error: 'ไม่พบรูปภาพ' });
+    const contentType = { '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' }[path.extname(fileName)] || 'application/octet-stream';
+    response.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=31536000, immutable' });
+    return fs.createReadStream(filePath).pipe(response);
+  }
   if (url.pathname !== '/api.php') return sendJson(response, 404, { error: 'ไม่พบเส้นทางนี้' });
 
   try {
